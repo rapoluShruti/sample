@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Nirmaan Voice Assistant</title>
+
+  <!-- PWA basics -->
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#f97316" />
+
+  <style>
+    body {
+      margin: 0;
+      height: 100vh;
+      background: linear-gradient(135deg, #fff7ed, #ffedd5);
+      font-family: system-ui, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .card {
+      background: white;
+      padding: 32px;
+      border-radius: 16px;
+      width: 90%;
+      max-width: 420px;
+      text-align: center;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    }
+
+    h1 {
+      margin-bottom: 10px;
+      color: #ea580c;
+    }
+
+    .status {
+      margin: 16px 0;
+      font-size: 16px;
+      color: #555;
+      min-height: 24px;
+    }
+
+    button {
+      background: #f97316;
+      color: white;
+      border: none;
+      padding: 14px 22px;
+      border-radius: 999px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+
+    button:disabled {
+      background: #fdba74;
+      cursor: not-allowed;
+    }
+
+    .mic {
+      font-size: 42px;
+      margin: 16px 0;
+    }
+
+    .heard {
+      margin-top: 16px;
+      font-size: 14px;
+      color: #333;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="card">
+    <h1>Nirmaan Assistant</h1>
+    <div class="mic">🎤</div>
+    <div class="status" id="status">Tap start and speak</div>
+    <button id="startBtn">Start Listening</button>
+    <div class="heard" id="heard"></div>
+  </div>
+
+<script>
+  const SpeechRecognition =
+    window.SpeechRecognition || window.webkitSpeechRecognition;
+
+  if (!SpeechRecognition) {
+    alert("Speech Recognition not supported in this browser");
+  }
+
+  const recognition = new SpeechRecognition();
+  recognition.lang = "en-IN";
+  recognition.continuous = true;
+  recognition.interimResults = true;
+
+  const statusEl = document.getElementById("status");
+  const heardEl = document.getElementById("heard");
+  const startBtn = document.getElementById("startBtn");
+
+  let listening = false;
+
+  recognition.onstart = () => {
+    statusEl.textContent = "Listening… Speak now";
+  };
+
+  recognition.onend = () => {
+    if (listening) recognition.start();
+  };
+
+  recognition.onerror = (e) => {
+    statusEl.textContent = "Mic error: " + e.error;
+  };
+
+  recognition.onresult = (event) => {
+    const result = event.results[event.results.length - 1];
+    const text = result[0].transcript.toLowerCase();
+    heardEl.textContent = "Heard: " + text;
+
+    if (result.isFinal) {
+      handleCommand(text);
+    }
+  };
+
+  function handleCommand(text) {
+    if (text.includes("attendance")) {
+      statusEl.textContent = "Opening attendance";
+    } else if (text.includes("today")) {
+      statusEl.textContent = "Showing today’s tasks";
+    } else if (text.includes("stop")) {
+      stopListening();
+    } else {
+      statusEl.textContent = "Command received";
+    }
+  }
+
+  function startListening() {
+    listening = true;
+    recognition.start();
+    startBtn.disabled = true;
+    startBtn.textContent = "Listening…";
+  }
+
+  function stopListening() {
+    listening = false;
+    recognition.stop();
+    startBtn.disabled = false;
+    startBtn.textContent = "Start Listening";
+    statusEl.textContent = "Stopped";
+  }
+
+  startBtn.onclick = startListening;
+
+  // Service worker registration
+  if ("serviceWorker" in navigator) {
+    navigator.serviceWorker.register("sw.js");
+  }
+</script>
+
+</body>
+</html>
